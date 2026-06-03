@@ -1,16 +1,6 @@
 # Compute-Efficient Polar BEV Descriptors for Cross-Domain LiDAR Place Recognition on Road and Waterway Platforms
 
 <p align="center">
-  <video src="figures/usvloc.mp4" width="95%" controls muted loop>
-    Your browser does not support the video tag.
-  </video>
-</p>
-
-<p align="center">
-  <a href="figures/usvloc.mp4">View demo video</a>
-</p>
-
-<p align="center">
   <img src="figures/usvloc_architecture.png" width="95%" alt="USVLoc architecture">
 </p>
 
@@ -34,6 +24,15 @@ This repository is an anonymized release of the core implementation for training
 - **Compute-efficient polar BEV descriptors** with Cartesian-to-polar resampling, circular angular modeling, polar self-attention, Angular GeM pooling, and RadialMix descriptor projection.
 - **Unified evaluation scripts** for KITTI, NCLT, Pohang, USVInland, loop closure, global localization, and real-world USV experiments.
 - **Ready-to-run checkpoint path** for reproducing the main place recognition and backend evaluations.
+
+## Demo
+
+<p align="center">
+  <video width="95%" controls preload="metadata" poster="figures/usvloc_architecture.png">
+    <source src="figures/usvloc.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</p>
 
 ## Contents
 
