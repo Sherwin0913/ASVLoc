@@ -132,7 +132,7 @@ def _extract_feature_bank(
 
     bank = FeatureBank(
         sequence_name=str(dataset.meta.sequence_name),
-        sequence_dir=key,
+        sequence_dir=key[0],
         descriptors=np.concatenate(descriptors, axis=0).astype(np.float32, copy=False),
         position=np.concatenate(positions, axis=0).astype(np.float32, copy=False),
         xy=np.concatenate(xys, axis=0).astype(np.float32, copy=False),

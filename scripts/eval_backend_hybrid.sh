@@ -7,12 +7,17 @@ cd "${REPO_ROOT}"
 GPU_ID="${GPU_ID:-0}"
 CONFIG="${CONFIG:-configs/usvloc_default.yaml}"
 USVLOC_CHECKPOINT="${USVLOC_CHECKPOINT:-checkpoint/results/final_best_place/usvloc_best_place_recognition.pt}"
-LOCAL_GEOMETRY_CHECKPOINT="${LOCAL_GEOMETRY_CHECKPOINT:-${BEVPLACEPP_CHECKPOINT:-checkpoint/local_geometry_head.pth.tar}}"
+LOCAL_GEOMETRY_CHECKPOINT="${LOCAL_GEOMETRY_CHECKPOINT:-${BEVPLACEPP_CHECKPOINT:-}}"
 DATA_ROOT="${DATA_ROOT:-${REPO_ROOT}/data}"
 DATASETS="${DATASETS:-kitti nclt}"
 OUTPUT_DIR="${OUTPUT_DIR:-outputs/backend_hybrid}"
 SKIP_LOOP="${SKIP_LOOP:-0}"
 NO_RUNTIME="${NO_RUNTIME:-1}"
+
+if [[ -z "${LOCAL_GEOMETRY_CHECKPOINT}" ]]; then
+  echo "Please set LOCAL_GEOMETRY_CHECKPOINT=/path/to/local_geometry_head.pth.tar" >&2
+  exit 1
+fi
 
 read -r -a DATASET_ARGS <<< "${DATASETS}"
 EXTRA_ARGS=()

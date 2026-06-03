@@ -1,6 +1,16 @@
 # Compute-Efficient Polar BEV Descriptors for Cross-Domain LiDAR Place Recognition on Road and Waterway Platforms
 
 <p align="center">
+  <video src="figures/usvloc.mp4" width="95%" controls muted loop>
+    Your browser does not support the video tag.
+  </video>
+</p>
+
+<p align="center">
+  <a href="figures/usvloc.mp4">View demo video</a>
+</p>
+
+<p align="center">
   <img src="figures/usvloc_architecture.png" width="95%" alt="USVLoc architecture">
 </p>
 
@@ -73,6 +83,7 @@ usvloc/
   checkpoint/results/
     final_best_place/usvloc_best_place_recognition.pt
   figures/
+    usvloc.mp4
     usvloc_architecture.png
   scripts/
     train.py
