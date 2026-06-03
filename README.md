@@ -28,9 +28,7 @@ This repository is an anonymized release of the core implementation for training
 ## Demo
 
 <p align="center">
-  <a href="figures/usvloc.mp4">
-    <img src="figures/usvloc_architecture.png" width="95%" alt="USVLoc demo video">
-  </a>
+  <img src="figures/usvloc.gif" width="95%" alt="USVLoc demo">
 </p>
 
 ## Contents
@@ -81,7 +79,7 @@ usvloc/
   checkpoint/results/
     final_best_place/usvloc_best_place_recognition.pt
   figures/
-    usvloc.mp4
+    usvloc.gif
     usvloc_architecture.png
   scripts/
     train.py
