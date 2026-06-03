@@ -28,10 +28,9 @@ This repository is an anonymized release of the core implementation for training
 ## Demo
 
 <p align="center">
-  <video width="95%" controls preload="metadata" poster="figures/usvloc_architecture.png">
-    <source src="figures/usvloc.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+  <a href="figures/usvloc.mp4">
+    <img src="figures/usvloc_architecture.png" width="95%" alt="USVLoc demo video">
+  </a>
 </p>
 
 ## Contents
