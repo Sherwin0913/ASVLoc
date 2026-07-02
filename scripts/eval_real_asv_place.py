@@ -18,7 +18,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from usvloc.backend.frontends import load_bevplacepp_adapter, load_usvloc_adapter  # noqa: E402
+from asvloc.backend.frontends import load_bevplacepp_adapter, load_asvloc_adapter  # noqa: E402
 
 
 class BEVFramesDataset(Dataset):
@@ -68,7 +68,7 @@ def resolve_bev_path(dataset_root: Path, row: dict[str, Any]) -> Path:
     raise FileNotFoundError(f"Cannot resolve BEV image for sequence={row.get('sequence')} frame_id={row.get('frame_id')}")
 
 
-def load_real_usv_rows(dataset_root: Path) -> list[dict[str, Any]]:
+def load_real_asv_rows(dataset_root: Path) -> list[dict[str, Any]]:
     csv_path = dataset_root / "frames_with_pose.csv"
     if not csv_path.is_file():
         raise FileNotFoundError(f"Missing frames_with_pose.csv: {csv_path}")
@@ -237,16 +237,16 @@ def write_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Evaluate real-world USV BEV place recognition with leave-one-sequence-out protocol.")
-    parser.add_argument("--dataset-root", type=Path, default=Path("data/Real-World USV Applications"))
-    parser.add_argument("--output-dir", type=Path, default=Path("outputs/eval_real_usv_place"))
-    parser.add_argument("--usvloc-config", type=Path, default=REPO_ROOT / "configs/usvloc_default.yaml")
-    parser.add_argument("--usvloc-ckpt", type=Path, default=REPO_ROOT / "checkpoint/results/final_best_place/usvloc_best_place_recognition.pt")
+    parser = argparse.ArgumentParser(description="Evaluate real-world ASV BEV place recognition with leave-one-sequence-out protocol.")
+    parser.add_argument("--dataset-root", type=Path, default=Path("data/Real-World ASV Applications"))
+    parser.add_argument("--output-dir", type=Path, default=Path("outputs/eval_real_asv_place"))
+    parser.add_argument("--asvloc-config", type=Path, default=REPO_ROOT / "configs/asvloc_default.yaml")
+    parser.add_argument("--asvloc-ckpt", type=Path, default=REPO_ROOT / "checkpoint/results/final_best_place/asvloc_best_place_recognition.pt")
     parser.add_argument("--bevplace-ckpt", type=Path, default=None)
-    parser.add_argument("--methods", nargs="+", default=["USVLoc"], choices=["USVLoc", "BEVPlace++"])
+    parser.add_argument("--methods", nargs="+", default=["ASVLoc"], choices=["ASVLoc", "BEVPlace++"])
     parser.add_argument("--positive-radius-m", type=float, default=5.0)
     parser.add_argument("--image-size", type=int, default=201)
-    parser.add_argument("--batch-size-usvloc", type=int, default=96)
+    parser.add_argument("--batch-size-asvloc", type=int, default=96)
     parser.add_argument("--batch-size-bevplace", type=int, default=48)
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--divisor", type=float, default=255.0)
@@ -261,7 +261,7 @@ def main() -> None:
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    rows = load_real_usv_rows(dataset_root)
+    rows = load_real_asv_rows(dataset_root)
     print(f"[data] frames={len(rows)} sequences={len(set(row['sequence'] for row in rows))}", flush=True)
     if "pose_delta_ms" in rows[0]:
         deltas = np.asarray([float(row["pose_delta_ms"]) for row in rows], dtype=np.float32)
@@ -281,32 +281,32 @@ def main() -> None:
         "force_gray3": bool(args.force_gray3),
     }
 
-    if "USVLoc" in args.methods:
-        print("[model] loading USVLoc", flush=True)
-        usvloc, usv_meta = load_usvloc_adapter(args.usvloc_config, args.usvloc_ckpt, device=device)
-        print("[extract] USVLoc with 4-rotation query TTA descriptors", flush=True)
-        usv_feats = extract_descriptors(
-            "USVLoc",
-            usvloc,
+    if "ASVLoc" in args.methods:
+        print("[model] loading ASVLoc", flush=True)
+        asvloc, asv_meta = load_asvloc_adapter(args.asvloc_config, args.asvloc_ckpt, device=device)
+        print("[extract] ASVLoc with 4-rotation query TTA descriptors", flush=True)
+        asv_feats = extract_descriptors(
+            "ASVLoc",
+            asvloc,
             rows,
             device=device,
-            batch_size=int(args.batch_size_usvloc),
+            batch_size=int(args.batch_size_asvloc),
             image_size=int(args.image_size),
             divisor=float(args.divisor),
             force_gray3=bool(args.force_gray3),
             include_tta=True,
             num_workers=int(args.num_workers),
         )
-        np.save(output_dir / "usvloc_descriptors.npy", usv_feats["descriptors"])
-        np.save(output_dir / "usvloc_tta_descriptors.npy", usv_feats["tta_descriptors"])
-        all_results["USVLoc"] = evaluate_leave_one_sequence_out(
+        np.save(output_dir / "asvloc_descriptors.npy", asv_feats["descriptors"])
+        np.save(output_dir / "asvloc_tta_descriptors.npy", asv_feats["tta_descriptors"])
+        all_results["ASVLoc"] = evaluate_leave_one_sequence_out(
             rows,
-            usv_feats["descriptors"],
-            usv_feats["tta_descriptors"],
+            asv_feats["descriptors"],
+            asv_feats["tta_descriptors"],
             positive_radius_m=float(args.positive_radius_m),
         )
-        write_tsv(output_dir / "usvloc_recall_at_1.tsv", all_results["USVLoc"])
-        metadata["usvloc"] = usv_meta
+        write_tsv(output_dir / "asvloc_recall_at_1.tsv", all_results["ASVLoc"])
+        metadata["asvloc"] = asv_meta
 
     if "BEVPlace++" in args.methods:
         if args.bevplace_ckpt is None:

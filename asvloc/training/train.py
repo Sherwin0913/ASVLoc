@@ -14,10 +14,10 @@ from torch.utils.data import DataLoader
 
 from ..data import SBEVLocFrameTripletDataset, resolve_sequence_dir, sbevloc_collate_fn
 from ..data.common import ProcessedSequenceDataset
-from ..evaluation import build_shared_frontend_cache, evaluate_place_all, evaluate_usvinland_place
+from ..evaluation import build_shared_frontend_cache, evaluate_place_all, evaluate_asvinland_place
 from ..io import ensure_dir, save_json, save_tsv, timestamp_string
 from ..losses import lazy_triplet_loss
-from ..models import USVLoc
+from ..models import ASVLoc
 
 
 def _configure_runtime_threads(torch_num_threads: int, torch_num_interop_threads: int, cv2_num_threads: int) -> None:
@@ -147,11 +147,11 @@ def _validate_dataset_geometry(cfg: Dict) -> Dict[str, float]:
     }
 
 
-def _build_model(cfg: Dict, device: torch.device) -> USVLoc:
-    return USVLoc(cfg["model"]).to(device)
+def _build_model(cfg: Dict, device: torch.device) -> ASVLoc:
+    return ASVLoc(cfg["model"]).to(device)
 
 
-def _build_optimizer(model: USVLoc, stage2_cfg: Dict):
+def _build_optimizer(model: ASVLoc, stage2_cfg: Dict):
     optimizer_name = str(stage2_cfg.get("optimizer", "adamw")).lower()
     base_lr = float(stage2_cfg.get("lr", 5.0e-5))
     base_weight_decay = float(stage2_cfg.get("weight_decay", 1.0e-4))
@@ -288,13 +288,13 @@ def _evaluate_place_for_cfg(
     shared_frontend: Dict[str, object] | None = None,
 ) -> Dict[str, object]:
     dataset_name = str(eval_cfg.get("dataset", {}).get("name", "kitti")).lower()
-    if dataset_name == "usvinland":
-        summary = evaluate_usvinland_place(
+    if dataset_name == "asvinland":
+        summary = evaluate_asvinland_place(
             model=model,
             cfg=eval_cfg,
             device=device,
             output_dir=output_dir,
-            raw_root=eval_cfg.get("evaluation", {}).get("raw_root", "data/USVInlandRaw"),
+            raw_root=eval_cfg.get("evaluation", {}).get("raw_root", "data/ASVInlandRaw"),
             sequences=eval_cfg.get("evaluation", {}).get("sequences", None),
             positive_radius_m=float(
                 eval_cfg.get("evaluation", {}).get(
@@ -359,13 +359,13 @@ def _load_training_checkpoint(
     return start_epoch, metadata
 
 
-def train_usvloc(
+def train_asvloc(
     cfg: Dict,
     output_dir: str | Path | None = None,
     resume_checkpoint: str | Path | None = None,
     load_optimizer: bool = True,
 ) -> Path:
-    """Main USVLoc training function.
+    """Main ASVLoc training function.
 
     Training flow:
     1. Validate BEV data geometry.
@@ -411,7 +411,7 @@ def train_usvloc(
             while int(getattr(scheduler, "current_train_epoch", 1)) < int(start_epoch):
                 scheduler.step()
         print(
-            f"[USVLoc] resumed from {Path(resume_path).resolve()} "
+            f"[ASVLoc] resumed from {Path(resume_path).resolve()} "
             f"start_epoch={start_epoch} load_optimizer={bool(load_optimizer)}",
             flush=True,
         )
@@ -473,7 +473,7 @@ def train_usvloc(
 
     if start_epoch > epochs:
         print(
-            f"[USVLoc] start_epoch={start_epoch} is greater than configured epochs={epochs}; nothing to train.",
+            f"[ASVLoc] start_epoch={start_epoch} is greater than configured epochs={epochs}; nothing to train.",
             flush=True,
         )
         return run_dir
@@ -482,7 +482,7 @@ def train_usvloc(
         if bool(data_cfg.get("hard_mining_enabled", True)) and str(data_cfg.get("hard_mining_mode", "epoch_cache")) == "epoch_cache":
             # This implementation uses epoch-cache hard mining: each epoch first extracts descriptors for the full
             # training set, then training batches prefer negatives with closer descriptor distances.
-            print(f"[USVLoc] building hard mining cache for epoch {epoch}/{epochs}", flush=True)
+            print(f"[ASVLoc] building hard mining cache for epoch {epoch}/{epochs}", flush=True)
             dataset.prepare_epoch_hard_mining(
                 model=model,
                 device=device,
@@ -525,7 +525,7 @@ def train_usvloc(
             epoch_rows.append(row)
             if batch_index == 1 or batch_index % log_interval == 0:
                 print(
-                    f"[USVLoc][Train] epoch {epoch}/{epochs} step {batch_index}/{len(loader)} "
+                    f"[ASVLoc][Train] epoch {epoch}/{epochs} step {batch_index}/{len(loader)} "
                     f"loss={row['loss']:.4f} posd={row['positive_distance']:.4f} "
                     f"hardnegd={row['hardest_negative_distance']:.4f}",
                     flush=True,
@@ -539,7 +539,7 @@ def train_usvloc(
 
         if eval_every > 0 and epoch % eval_every == 0:
             shared_frontend = None
-            if str(cfg.get("dataset", {}).get("name", "kitti")).lower() != "usvinland":
+            if str(cfg.get("dataset", {}).get("name", "kitti")).lower() != "asvinland":
                 shared_frontend = build_shared_frontend_cache(model, cfg, device)
             place = _evaluate_place_for_cfg(
                 model,
@@ -550,7 +550,7 @@ def train_usvloc(
             )
             _append_place_metrics(epoch_payload, place, prefix="place")
             print(
-                f"[USVLoc][Eval] epoch {epoch}/{epochs} "
+                f"[ASVLoc][Eval] epoch {epoch}/{epochs} "
                 f"meanR1={float(place['mean_recall_at_1']):.4f} "
                 f"meanR5={float(place['mean_recall_at_5']):.4f}",
                 flush=True,
@@ -564,7 +564,7 @@ def train_usvloc(
                 )
                 _append_place_metrics(epoch_payload, cross_place, prefix=metric_prefix)
                 print(
-                    f"[USVLoc][CrossEval:{metric_prefix}] epoch {epoch}/{epochs} "
+                    f"[ASVLoc][CrossEval:{metric_prefix}] epoch {epoch}/{epochs} "
                     f"meanR1={float(cross_place['mean_recall_at_1']):.4f} "
                     f"meanR5={float(cross_place['mean_recall_at_5']):.4f}",
                     flush=True,

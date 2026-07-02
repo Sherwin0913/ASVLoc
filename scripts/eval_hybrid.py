@@ -11,26 +11,26 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from usvloc.backend import SparseRansacBackend, evaluate_backend_bundle, load_hybrid_adapter
-from usvloc.io import ensure_dir, save_json
+from asvloc.backend import SparseRansacBackend, evaluate_backend_bundle, load_hybrid_adapter
+from asvloc.io import ensure_dir, save_json
 
 
 def parse_args() -> argparse.Namespace:
     """Parse hybrid backend evaluation arguments.
 
-    Hybrid mode uses USVLoc for global retrieval and BEVPlace++ REM local
+    Hybrid mode uses ASVLoc for global retrieval and BEVPlace++ REM local
     features for geometric verification.
     """
     parser = argparse.ArgumentParser(
-        description="Evaluate USVLoc retrieval + BEVPlace++ geometry hybrid backend.",
+        description="Evaluate ASVLoc retrieval + BEVPlace++ geometry hybrid backend.",
     )
-    parser.add_argument("--usvloc-ckpt", type=Path, required=True)
+    parser.add_argument("--asvloc-ckpt", type=Path, required=True)
     parser.add_argument("--bevplace-ckpt", type=Path, required=True)
-    parser.add_argument("--config", type=Path, default=REPO_ROOT / "configs/usvloc_default.yaml")
+    parser.add_argument("--config", type=Path, default=REPO_ROOT / "configs/asvloc_default.yaml")
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--processed-root", type=Path, default=REPO_ROOT / "data")
-    parser.add_argument("--dataset", choices=["kitti", "nclt", "pohang", "usvinland"], default=None)
-    parser.add_argument("--datasets", nargs="+", default=None, choices=["kitti", "nclt", "pohang", "usvinland"])
+    parser.add_argument("--dataset", choices=["kitti", "nclt", "pohang", "asvinland"], default=None)
+    parser.add_argument("--datasets", nargs="+", default=None, choices=["kitti", "nclt", "pohang", "asvinland"])
     parser.add_argument("--sequence-names", nargs="+", default=None, help="Evaluate only these query sequence names.")
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--gpu", type=int, default=None)
@@ -94,17 +94,17 @@ def main() -> None:
         torch.cuda.set_device(device.index)
 
     adapter, metadata = load_hybrid_adapter(
-        usvloc_config_path=args.config,
-        usvloc_checkpoint_path=args.usvloc_ckpt,
+        asvloc_config_path=args.config,
+        asvloc_checkpoint_path=args.asvloc_ckpt,
         bevplacepp_checkpoint_path=args.bevplace_ckpt,
         device=device,
-        usvloc_overrides=list(args.overrides),
+        asvloc_overrides=list(args.overrides),
     )
     if bool(args.disable_query_tta):
         adapter.query_uses_tta = False
         metadata["query_tta_rotations_deg"] = []
         metadata["hybrid_note"] = (
-            "Global retrieval descriptors are produced by USVLoc without query TTA; "
+            "Global retrieval descriptors are produced by ASVLoc without query TTA; "
             "sparse geometric verification uses BEVPlace++ REM local features and the same "
             "BEVPlace2-style RANSAC backend as the BEVPlace++ baseline."
         )
@@ -124,8 +124,8 @@ def main() -> None:
 
     output_dir = ensure_dir(args.output_dir)
     run_meta = {
-        "model_type": "hybrid_usvloc_retrieval_bevplacepp_geometry",
-        "usvloc_ckpt": str(args.usvloc_ckpt.resolve()),
+        "model_type": "hybrid_asvloc_retrieval_bevplacepp_geometry",
+        "asvloc_ckpt": str(args.asvloc_ckpt.resolve()),
         "bevplace_ckpt": str(args.bevplace_ckpt.resolve()),
         "config": str(args.config.resolve()),
         "processed_root": str(args.processed_root.resolve()),

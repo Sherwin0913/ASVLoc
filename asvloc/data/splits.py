@@ -18,7 +18,7 @@ NCLT_DEFAULT_QUERY_SEQUENCES = (
     "2012-11-16",
     "2013-02-23",
 )
-USVINLAND_DEFAULT_SEQUENCES: tuple[str, ...] = (
+ASVINLAND_DEFAULT_SEQUENCES: tuple[str, ...] = (
     "H05_7_Sequence_160_270",
     "H05_9_Sequence_115_700",
     "N02_4_Sequence_155_370",
@@ -70,7 +70,7 @@ class PohangPlaceSpec:
 
 
 @dataclass
-class USVInlandPlaceSpec:
+class ASVInlandPlaceSpec:
     query_sequence_name: str
     database_sequence_name: str
     query_sequence_dir: Path
@@ -117,11 +117,11 @@ def _list_pohang_sequences(processed_root: str | Path) -> list[str]:
     return sequences
 
 
-def _list_usvinland_sequences(processed_root: str | Path) -> list[str]:
-    usvinland_root = resolve_dataset_root(processed_root, "usvinland")
-    sequences = sorted(path.name for path in usvinland_root.iterdir() if path.is_dir())
+def _list_asvinland_sequences(processed_root: str | Path) -> list[str]:
+    asvinland_root = resolve_dataset_root(processed_root, "asvinland")
+    sequences = sorted(path.name for path in asvinland_root.iterdir() if path.is_dir())
     if not sequences:
-        raise RuntimeError(f"No USVInland sequences found in {usvinland_root}")
+        raise RuntimeError(f"No ASVInland sequences found in {asvinland_root}")
     return sequences
 
 
@@ -236,26 +236,26 @@ def build_pohang_place_specs(
     return specs
 
 
-def build_usvinland_place_specs(
+def build_asvinland_place_specs(
     processed_root: str | Path,
     sequences: Sequence[str] | None = None,
     positive_radius_m: float = 5.0,
-) -> list[USVInlandPlaceSpec]:
+) -> list[ASVInlandPlaceSpec]:
     processed_root = Path(processed_root)
-    usvinland_root = resolve_dataset_root(processed_root, "usvinland")
-    available_sequences = _list_usvinland_sequences(processed_root)
+    asvinland_root = resolve_dataset_root(processed_root, "asvinland")
+    available_sequences = _list_asvinland_sequences(processed_root)
     if sequences is None:
-        sequences = [seq for seq in USVINLAND_DEFAULT_SEQUENCES if seq in available_sequences]
+        sequences = [seq for seq in ASVINLAND_DEFAULT_SEQUENCES if seq in available_sequences]
         if not sequences:
             sequences = available_sequences
     else:
         sequences = [str(sequence) for sequence in sequences]
 
-    specs: list[USVInlandPlaceSpec] = []
+    specs: list[ASVInlandPlaceSpec] = []
     for sequence in sequences:
         if sequence not in available_sequences:
-            raise RuntimeError(f"USVInland sequence {sequence} not found in {usvinland_root}")
-        sequence_dir = usvinland_root / sequence
+            raise RuntimeError(f"ASVInland sequence {sequence} not found in {asvinland_root}")
+        sequence_dir = asvinland_root / sequence
         frames, _ = load_sequence(sequence_dir)
         database_indices = _select_indices_by_tags(frames, POHANG_DB_SPLIT_TAGS)
         query_indices = _select_indices_by_tags(frames, POHANG_QUERY_SPLIT_TAGS)
@@ -264,11 +264,11 @@ def build_usvinland_place_specs(
             database_indices = frames.index[:split_index].to_numpy(dtype=np.int64)
             query_indices = frames.index[split_index:].to_numpy(dtype=np.int64)
         if database_indices.size == 0:
-            raise RuntimeError(f"No USVInland database frames found in {sequence_dir}")
+            raise RuntimeError(f"No ASVInland database frames found in {sequence_dir}")
         if query_indices.size == 0:
-            raise RuntimeError(f"No USVInland query frames found in {sequence_dir}")
+            raise RuntimeError(f"No ASVInland query frames found in {sequence_dir}")
         specs.append(
-            USVInlandPlaceSpec(
+            ASVInlandPlaceSpec(
                 query_sequence_name=str(sequence),
                 database_sequence_name=str(sequence),
                 query_sequence_dir=sequence_dir,
@@ -280,5 +280,5 @@ def build_usvinland_place_specs(
         )
 
     if not specs:
-        raise RuntimeError(f"No USVInland sequences resolved under {usvinland_root}")
+        raise RuntimeError(f"No ASVInland sequences resolved under {asvinland_root}")
     return specs

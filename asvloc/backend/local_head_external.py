@@ -1,6 +1,6 @@
-"""External local descriptor head for USVLoc backend RANSAC.
+"""External local descriptor head for ASVLoc backend RANSAC.
 
-The frozen USVLoc checkpoint exposes ``cartesian_features`` with shape
+The frozen ASVLoc checkpoint exposes ``cartesian_features`` with shape
 ``[B,128,26,26]``. This standalone head upsamples those features into dense
 ``[B,128,201,201]`` L2-normalized descriptors without changing the main model
 forward or checkpoint format.

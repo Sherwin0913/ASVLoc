@@ -11,29 +11,29 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from usvloc.backend import (
+from asvloc.backend import (
     PolarRansacBackend,
     SparseRansacBackend,
     evaluate_backend_bundle,
     evaluate_polar_backend_bundle,
     load_bevplacepp_adapter,
-    load_usvloc_adapter,
+    load_asvloc_adapter,
 )
-from usvloc.io import ensure_dir, save_json
+from asvloc.io import ensure_dir, save_json
 
 
 def parse_args() -> argparse.Namespace:
-    """Parse single-model backend evaluation arguments for USVLoc or BEVPlace++."""
+    """Parse single-model backend evaluation arguments for ASVLoc or BEVPlace++."""
     parser = argparse.ArgumentParser(
-        description="Evaluate sparse RANSAC backend metrics for USVLoc or BEVPlace++.",
+        description="Evaluate sparse RANSAC backend metrics for ASVLoc or BEVPlace++.",
     )
-    parser.add_argument("--model-type", choices=["usvloc", "bevplacepp"], required=True)
+    parser.add_argument("--model-type", choices=["asvloc", "bevplacepp"], required=True)
     parser.add_argument("--checkpoint", type=Path, required=True)
-    parser.add_argument("--config", type=Path, default=REPO_ROOT / "configs/usvloc_default.yaml")
+    parser.add_argument("--config", type=Path, default=REPO_ROOT / "configs/asvloc_default.yaml")
     parser.add_argument("--local-head-ckpt", type=Path, default=None)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--processed-root", type=Path, default=REPO_ROOT / "data")
-    parser.add_argument("--datasets", nargs="+", default=["kitti", "nclt"], choices=["kitti", "nclt", "pohang", "usvinland"])
+    parser.add_argument("--datasets", nargs="+", default=["kitti", "nclt"], choices=["kitti", "nclt", "pohang", "asvinland"])
     parser.add_argument("--sequence-names", nargs="+", default=None, help="Evaluate only these query sequence names.")
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--set", dest="overrides", action="append", default=[], metavar="KEY=VALUE")
@@ -87,8 +87,8 @@ def main() -> None:
     if device.type == "cuda" and device.index is not None:
         torch.cuda.set_device(device.index)
 
-    if args.model_type == "usvloc":
-        adapter, metadata = load_usvloc_adapter(
+    if args.model_type == "asvloc":
+        adapter, metadata = load_asvloc_adapter(
             config_path=args.config,
             checkpoint_path=args.checkpoint,
             device=device,
@@ -109,13 +109,13 @@ def main() -> None:
     elif bool(args.disable_query_tta):
         adapter.query_uses_tta = False
         metadata["query_tta_rotations_deg"] = []
-    if args.model_type == "usvloc":
-        metadata["usvloc_note"] = (
-            "Global descriptor is produced by the polar USVLoc frontend; backend uses 4-rotation descriptor TTA, light polar ACC reranking, "
+    if args.model_type == "asvloc":
+        metadata["asvloc_note"] = (
+            "Global descriptor is produced by the polar ASVLoc frontend; backend uses 4-rotation descriptor TTA, light polar ACC reranking, "
             f"{metadata.get('local_feature_source', 'cartesian_features')} as local dense features, BEVPlace2-style BF matching, 2-point full rigid RANSAC, and SVD-ICP refinement."
         )
 
-    if args.model_type == "usvloc":
+    if args.model_type == "asvloc":
         backend = PolarRansacBackend(random_seed=int(args.random_seed))
     else:
         backend = SparseRansacBackend(
@@ -133,7 +133,7 @@ def main() -> None:
         )
 
     output_dir = ensure_dir(args.output_dir)
-    if args.model_type == "usvloc":
+    if args.model_type == "asvloc":
         backend_meta = {
             "type": "PolarRansacBackend",
             "loop_inlier_threshold": backend.loop_inlier_threshold,
@@ -145,7 +145,7 @@ def main() -> None:
     run_meta = {
         "model_type": args.model_type,
         "checkpoint": str(args.checkpoint.resolve()),
-        "config": str(args.config.resolve()) if args.model_type == "usvloc" else None,
+        "config": str(args.config.resolve()) if args.model_type == "asvloc" else None,
         "local_head_ckpt": str(args.local_head_ckpt.resolve()) if args.local_head_ckpt is not None else None,
         "processed_root": str(args.processed_root.resolve()),
         "datasets": [str(dataset) for dataset in args.datasets],
@@ -159,7 +159,7 @@ def main() -> None:
     }
     save_json(output_dir / "run_meta.json", run_meta)
 
-    if args.model_type == "usvloc":
+    if args.model_type == "asvloc":
         result = evaluate_polar_backend_bundle(
             adapter=adapter,
             backend=backend,

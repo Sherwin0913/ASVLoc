@@ -9,8 +9,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as tv_models
 
-from usvloc.config import load_config
-from usvloc.models import USVLoc
+from asvloc.config import load_config
+from asvloc.models import ASVLoc
 
 from .local_head_external import ExternalLocalHead
 
@@ -130,20 +130,20 @@ class DeviceSafeREIN(nn.Module):
         }
 
 
-class USVLocAdapter:
-    """USVLoc backend evaluation adapter.
+class ASVLocAdapter:
+    """ASVLoc backend evaluation adapter.
 
     Backend evaluation needs a unified interface: global descriptors are used
     for retrieval, and local features are used for geometric verification. The
-    USVLoc global descriptor comes from the polar frontend; the default local
+    ASVLoc global descriptor comes from the polar frontend; the default local
     features come from ``cartesian_features`` because standard BEV RANSAC works
     in Cartesian pixel coordinates.
     """
 
-    name = "usvloc"
+    name = "asvloc"
     local_feature_source = "cartesian_features"
 
-    def __init__(self, model: USVLoc, device: torch.device) -> None:
+    def __init__(self, model: ASVLoc, device: torch.device) -> None:
         self.model = model.to(device).eval()
         self.device = device
         self.external_local_head: ExternalLocalHead | None = None
@@ -161,14 +161,14 @@ class USVLocAdapter:
         self.external_local_head = head
         self.external_local_head_ckpt = str(checkpoint_path.resolve())
         self.local_feature_source = "external_local_head"
-        print(f"[USVLocAdapter] loaded ExternalLocalHead from {self.external_local_head_ckpt}", flush=True)
+        print(f"[ASVLocAdapter] loaded ExternalLocalHead from {self.external_local_head_ckpt}", flush=True)
 
     def _local_from_output(
         self,
         output: Dict[str, torch.Tensor],
         output_size: tuple[int, int],
     ) -> torch.Tensor:
-        """Extract backend local features from USVLoc forward output."""
+        """Extract backend local features from ASVLoc forward output."""
         cartesian = output["cartesian_features"]
         if self.external_local_head is not None:
             local = self.external_local_head(cartesian.to(self.device))
@@ -262,20 +262,20 @@ def _load_state_dict(checkpoint_path: str | Path, map_location: torch.device | s
     return checkpoint, checkpoint
 
 
-def load_usvloc_adapter(
+def load_asvloc_adapter(
     config_path: str | Path,
     checkpoint_path: str | Path,
     device: torch.device,
     overrides: list[str] | None = None,
-) -> tuple[USVLocAdapter, Dict]:
-    """Load a USVLoc checkpoint and return the unified backend adapter."""
+) -> tuple[ASVLocAdapter, Dict]:
+    """Load a ASVLoc checkpoint and return the unified backend adapter."""
     cfg = load_config(config_path, overrides=overrides or [])
-    model = USVLoc(cfg["model"])
+    model = ASVLoc(cfg["model"])
     state_dict, checkpoint = _load_state_dict(checkpoint_path, map_location=device)
     model.load_state_dict(state_dict, strict=True)
-    adapter = USVLocAdapter(model, device=device)
+    adapter = ASVLocAdapter(model, device=device)
     metadata = {
-        "model_type": "usvloc",
+        "model_type": "asvloc",
         "config": str(Path(config_path).resolve()),
         "checkpoint": str(Path(checkpoint_path).resolve()),
         "checkpoint_epoch": checkpoint.get("epoch", None) if isinstance(checkpoint, dict) else None,

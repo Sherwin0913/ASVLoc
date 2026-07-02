@@ -127,7 +127,7 @@ def _write_sequence(output_dir: Path, sequence: str, frames: pd.DataFrame, origi
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Prepare USVLoc processed Pohang sequences from fused BEV PNGs.")
+    parser = argparse.ArgumentParser(description="Prepare ASVLoc processed Pohang sequences from fused BEV PNGs.")
     parser.add_argument("--dataset-root", type=Path, default=Path("data/PohangRaw"))
     parser.add_argument("--processed-root", type=Path, default=Path("data/Pohang"))
     parser.add_argument("--sequences", nargs="+", default=[f"pohang{i:02d}" for i in range(6)])

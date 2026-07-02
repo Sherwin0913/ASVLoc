@@ -13,8 +13,8 @@ from .pooling import AngularGeMPool
 from .radial_mix import RadialMixVPRHead
 
 
-class USVLoc(nn.Module):
-    """Main USVLoc network.
+class ASVLoc(nn.Module):
+    """Main ASVLoc network.
 
     The code structure maps directly to the paper modules:
     1. ``TruncatedResNetEncoder`` extracts 26x26 Cartesian BEV features.
@@ -30,7 +30,7 @@ class USVLoc(nn.Module):
         super().__init__()
         frontend_cfg = model_cfg.get("frontend", {})
         if str(frontend_cfg.get("mode", "polar")).lower() != "polar":
-            raise ValueError("USVLoc only keeps the final polar frontend implementation.")
+            raise ValueError("ASVLoc only keeps the final polar frontend implementation.")
 
         self.backbone = TruncatedResNetEncoder(
             pretrained=bool(model_cfg.get("frontend_pretrained", False)),
@@ -42,7 +42,7 @@ class USVLoc(nn.Module):
         aggregator_cfg = frontend_cfg.get("aggregator", {})
         theta_pool = str(frontend_cfg.get("theta_pool", "gem")).lower()
         if theta_pool != "gem":
-            raise ValueError("USVLoc final release only keeps AngularGeM pooling.")
+            raise ValueError("ASVLoc final release only keeps AngularGeM pooling.")
 
         self.cartesian_to_polar = CartesianToPolar(
             radial_bins=int(polar_cfg.get("radial_bins", 16)),

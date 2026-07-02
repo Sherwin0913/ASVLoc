@@ -1,7 +1,7 @@
 # Compute-Efficient Polar BEV Descriptors for Cross-Domain LiDAR Place Recognition on Road and Waterway Platforms
 
 <p align="center">
-  <img src="figures/usvloc_architecture.png" width="95%" alt="USVLoc architecture">
+  <img src="figures/asvloc_architecture.png" width="95%" alt="ASVLoc architecture">
 </p>
 
 <p align="center">
@@ -11,24 +11,24 @@
   <a href="#citation"><img src="https://img.shields.io/badge/Release-anonymized-lightgrey.svg" alt="Anonymized release"></a>
 </p>
 
-USVLoc is a compact LiDAR place recognition framework built around polar BEV descriptors. The model converts Cartesian BEV features into a polar representation, applies angular-aware aggregation and radial descriptor mixing, and produces efficient global descriptors for cross-domain retrieval on both road and waterway platforms.
+ASVLoc is a compact LiDAR place recognition framework built around polar BEV descriptors. The model converts Cartesian BEV features into a polar representation, applies angular-aware aggregation and radial descriptor mixing, and produces efficient global descriptors for cross-domain retrieval on both road and waterway platforms.
 
-This repository is an anonymized release of the core implementation for training, place recognition, loop closure, global localization, and real-world USV experiments.
+This repository is an anonymized release of the core implementation for training, place recognition, loop closure, global localization, and real-world ASV experiments.
 
 > **Release Note**
 > Additional code, usage notes, and pretrained model files will be released in this repository after paper acceptance.
 
 ## Highlights
 
-- **Cross-platform LiDAR localization** for road scenes and inland waterway USV deployments.
+- **Cross-platform LiDAR localization** for road scenes and inland waterway ASV deployments.
 - **Compute-efficient polar BEV descriptors** with Cartesian-to-polar resampling, circular angular modeling, polar self-attention, Angular GeM pooling, and RadialMix descriptor projection.
-- **Unified evaluation scripts** for KITTI, NCLT, Pohang, USVInland, loop closure, global localization, and real-world USV experiments.
+- **Unified evaluation scripts** for KITTI, NCLT, Pohang, ASVInland, loop closure, global localization, and real-world ASV experiments.
 - **Ready-to-run checkpoint path** for reproducing the main place recognition and backend evaluations.
 
 ## Demo
 
 <p align="center">
-  <img src="figures/usvloc.gif" width="95%" alt="USVLoc demo">
+  <img src="figures/asvloc.gif" width="95%" alt="ASVLoc demo">
 </p>
 
 ## Contents
@@ -41,7 +41,7 @@ This repository is an anonymized release of the core implementation for training
 - [Training](#training)
 - [Place Recognition](#place-recognition)
 - [Loop Closure and Global Localization](#loop-closure-and-global-localization)
-- [Real-World USV Experiments](#real-world-usv-experiments)
+- [Real-World ASV Experiments](#real-world-asv-experiments)
 - [Outputs](#outputs)
 - [Citation](#citation)
 
@@ -50,8 +50,8 @@ This repository is an anonymized release of the core implementation for training
 Create a fresh environment:
 
 ```bash
-conda create -n usvloc python=3.9 -y
-conda activate usvloc
+conda create -n asvloc python=3.9 -y
+conda activate asvloc
 pip install -r requirements.txt
 ```
 
@@ -71,23 +71,23 @@ faiss-cpu
 ## Repository Layout
 
 ```text
-usvloc/
+asvloc/
   README.md
   requirements.txt
   configs/
-    usvloc_default.yaml
+    asvloc_default.yaml
   checkpoint/results/
-    final_best_place/usvloc_best_place_recognition.pt
+    final_best_place/asvloc_best_place_recognition.pt
   figures/
-    usvloc.gif
-    usvloc_architecture.png
+    asvloc.gif
+    asvloc_architecture.png
   scripts/
     train.py
     eval_place.py
     eval_backend.py
     eval_hybrid.py
     ...
-  usvloc/
+  asvloc/
     models/
     data/
     evaluation/
@@ -110,8 +110,8 @@ data/
   KITTI/00
   NCLT/2012-01-15
   Pohang/00
-  USVInland/H05_7_Sequence_160_270
-  USVInlandRaw/
+  ASVInland/H05_7_Sequence_160_270
+  ASVInlandRaw/
 ```
 
 If your data is stored elsewhere, override the path at runtime:
@@ -120,16 +120,16 @@ If your data is stored elsewhere, override the path at runtime:
 DATA_ROOT=/path/to/processed/data bash scripts/eval_kitti_nclt_pohang.sh
 ```
 
-For USVInland place recognition, the raw dataset is read directly from:
+For ASVInland place recognition, the raw dataset is read directly from:
 
 ```text
-data/USVInlandRaw
+data/ASVInlandRaw
 ```
 
 Override it with:
 
 ```bash
-RAW_ROOT=/path/to/usvinland bash scripts/eval_usvinland.sh
+RAW_ROOT=/path/to/asvinland bash scripts/eval_asvinland.sh
 ```
 
 ## Checkpoint
@@ -137,7 +137,7 @@ RAW_ROOT=/path/to/usvinland bash scripts/eval_usvinland.sh
 This release includes one checkpoint:
 
 ```text
-checkpoint/results/final_best_place/usvloc_best_place_recognition.pt
+checkpoint/results/final_best_place/asvloc_best_place_recognition.pt
 ```
 
 ## Quick Start
@@ -147,19 +147,19 @@ Evaluate KITTI place recognition:
 ```bash
 GPU_ID=0 \
 DATASET=kitti \
-CHECKPOINT=checkpoint/results/final_best_place/usvloc_best_place_recognition.pt \
+CHECKPOINT=checkpoint/results/final_best_place/asvloc_best_place_recognition.pt \
 OUTPUT_DIR=outputs/eval_kitti \
 bash scripts/eval_kitti_nclt_pohang.sh
 ```
 
-Evaluate the USVLoc backend for loop closure and global localization:
+Evaluate the ASVLoc backend for loop closure and global localization:
 
 ```bash
 GPU_ID=0 \
 DATASETS="kitti nclt" \
-CHECKPOINT=checkpoint/results/final_best_place/usvloc_best_place_recognition.pt \
-OUTPUT_DIR=outputs/backend_usvloc \
-bash scripts/eval_backend_usvloc.sh
+CHECKPOINT=checkpoint/results/final_best_place/asvloc_best_place_recognition.pt \
+OUTPUT_DIR=outputs/backend_asvloc \
+bash scripts/eval_backend_asvloc.sh
 ```
 
 Train from scratch:
@@ -211,7 +211,7 @@ Use `DATASET=kitti`, `DATASET=nclt`, or `DATASET=pohang`:
 ```bash
 GPU_ID=0 \
 DATASET=kitti \
-CHECKPOINT=checkpoint/results/final_best_place/usvloc_best_place_recognition.pt \
+CHECKPOINT=checkpoint/results/final_best_place/asvloc_best_place_recognition.pt \
 OUTPUT_DIR=outputs/eval_kitti \
 bash scripts/eval_kitti_nclt_pohang.sh
 ```
@@ -220,40 +220,40 @@ Enable 4-rotation query TTA:
 
 ```bash
 python scripts/eval_place.py \
-  --config configs/usvloc_default.yaml \
-  --checkpoint checkpoint/results/final_best_place/usvloc_best_place_recognition.pt \
+  --config configs/asvloc_default.yaml \
+  --checkpoint checkpoint/results/final_best_place/asvloc_best_place_recognition.pt \
   --output-dir outputs/eval_kitti_tta \
   --query-tta \
   --set dataset.name=kitti \
   --set dataset.processed_root=/path/to/processed/data
 ```
 
-### USVInland
+### ASVInland
 
 ```bash
 GPU_ID=0 \
-RAW_ROOT=/path/to/usvinland \
-CHECKPOINT=checkpoint/results/final_best_place/usvloc_best_place_recognition.pt \
-OUTPUT_DIR=outputs/eval_usvinland \
-bash scripts/eval_usvinland.sh
+RAW_ROOT=/path/to/asvinland \
+CHECKPOINT=checkpoint/results/final_best_place/asvloc_best_place_recognition.pt \
+OUTPUT_DIR=outputs/eval_asvinland \
+bash scripts/eval_asvinland.sh
 ```
 
 ## Loop Closure and Global Localization
 
-Run the USVLoc backend:
+Run the ASVLoc backend:
 
 ```bash
 GPU_ID=0 \
 DATASETS="kitti nclt" \
-CHECKPOINT=checkpoint/results/final_best_place/usvloc_best_place_recognition.pt \
-OUTPUT_DIR=outputs/backend_usvloc \
-bash scripts/eval_backend_usvloc.sh
+CHECKPOINT=checkpoint/results/final_best_place/asvloc_best_place_recognition.pt \
+OUTPUT_DIR=outputs/backend_asvloc \
+bash scripts/eval_backend_asvloc.sh
 ```
 
 The backend pipeline is:
 
 ```text
-USVLoc global descriptor retrieval
+ASVLoc global descriptor retrieval
 Top-K retrieval candidates
 Geometric verification and reranking
 2D RANSAC + SVD-ICP pose estimation
@@ -264,7 +264,7 @@ Run the hybrid backend with an external local-geometry checkpoint:
 ```bash
 GPU_ID=0 \
 DATASETS="kitti nclt" \
-USVLOC_CHECKPOINT=checkpoint/results/final_best_place/usvloc_best_place_recognition.pt \
+ASVLOC_CHECKPOINT=checkpoint/results/final_best_place/asvloc_best_place_recognition.pt \
 LOCAL_GEOMETRY_CHECKPOINT=/path/to/local_geometry_head.pth.tar \
 OUTPUT_DIR=outputs/backend_default \
 bash scripts/eval_backend_default.sh
@@ -276,16 +276,16 @@ Run only global localization:
 SKIP_LOOP=1 NO_RUNTIME=1 bash scripts/eval_backend_default.sh
 ```
 
-## Real-World USV Experiments
+## Real-World ASV Experiments
 
-The real-world USV dataset can be downloaded from:
+The real-world ASV dataset can be downloaded from:
 
 https://drive.google.com/drive/folders/1-tDXa8Ew4Zaf3aOK9UiLtYk3F8XoK9Gp?usp=sharing
 
 Recommended layout:
 
 ```text
-data/Real-World USV Applications/
+data/Real-World ASV Applications/
   frames.csv
   frames_with_pose.csv
   bev/
@@ -296,21 +296,21 @@ data/Real-World USV Applications/
 Place recognition:
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python scripts/eval_real_usv_place.py \
-  --dataset-root "data/Real-World USV Applications" \
-  --usvloc-ckpt checkpoint/results/final_best_place/usvloc_best_place_recognition.pt \
-  --output-dir outputs/eval_real_usv_place
+CUDA_VISIBLE_DEVICES=0 python scripts/eval_real_asv_place.py \
+  --dataset-root "data/Real-World ASV Applications" \
+  --asvloc-ckpt checkpoint/results/final_best_place/asvloc_best_place_recognition.pt \
+  --output-dir outputs/eval_real_asv_place
 ```
 
 Global localization:
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python scripts/eval_real_usv_global_localization.py \
-  --dataset-root "data/Real-World USV Applications" \
-  --place-dir outputs/eval_real_usv_place \
-  --usvloc-ckpt checkpoint/results/final_best_place/usvloc_best_place_recognition.pt \
+CUDA_VISIBLE_DEVICES=0 python scripts/eval_real_asv_global_localization.py \
+  --dataset-root "data/Real-World ASV Applications" \
+  --place-dir outputs/eval_real_asv_place \
+  --asvloc-ckpt checkpoint/results/final_best_place/asvloc_best_place_recognition.pt \
   --local-geometry-ckpt /path/to/local_geometry_head.pth.tar \
-  --output-dir outputs/eval_real_usv_global_localization
+  --output-dir outputs/eval_real_asv_global_localization
 ```
 
 ## Outputs
@@ -341,7 +341,7 @@ outputs/backend_default/<dataset>/loop/paper_loop_v4.tsv
 If you use this repository, please cite the paper:
 
 ```bibtex
-@article{anonymous2026usvloc,
+@article{anonymous2026asvloc,
   title   = {Compute-Efficient Polar BEV Descriptors for Cross-Domain LiDAR Place Recognition on Road and Waterway Platforms},
   author  = {Anonymous Authors},
   journal = {Under Review},

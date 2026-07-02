@@ -5,8 +5,8 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${REPO_ROOT}"
 
 GPU_ID="${GPU_ID:-0}"
-CONFIG="${CONFIG:-configs/usvloc_default.yaml}"
-USVLOC_CHECKPOINT="${USVLOC_CHECKPOINT:-checkpoint/results/final_best_place/usvloc_best_place_recognition.pt}"
+CONFIG="${CONFIG:-configs/asvloc_default.yaml}"
+ASVLOC_CHECKPOINT="${ASVLOC_CHECKPOINT:-checkpoint/results/final_best_place/asvloc_best_place_recognition.pt}"
 LOCAL_GEOMETRY_CHECKPOINT="${LOCAL_GEOMETRY_CHECKPOINT:-${BEVPLACEPP_CHECKPOINT:-}}"
 DATA_ROOT="${DATA_ROOT:-${REPO_ROOT}/data}"
 DATASETS="${DATASETS:-kitti nclt}"
@@ -30,7 +30,7 @@ fi
 
 CUDA_VISIBLE_DEVICES="${GPU_ID}" python scripts/eval_hybrid.py \
   --config "${CONFIG}" \
-  --usvloc-ckpt "${USVLOC_CHECKPOINT}" \
+  --asvloc-ckpt "${ASVLOC_CHECKPOINT}" \
   --bevplace-ckpt "${LOCAL_GEOMETRY_CHECKPOINT}" \
   --output-dir "${OUTPUT_DIR}" \
   --processed-root "${DATA_ROOT}" \

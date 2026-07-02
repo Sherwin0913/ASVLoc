@@ -16,10 +16,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from usvloc.backend import SparseRansacBackend, load_bevplacepp_adapter, load_hybrid_adapter  # noqa: E402
-from usvloc.backend.evaluator import _relative_pose_error  # noqa: E402
+from asvloc.backend import SparseRansacBackend, load_bevplacepp_adapter, load_hybrid_adapter  # noqa: E402
+from asvloc.backend.evaluator import _relative_pose_error  # noqa: E402
 
-from eval_real_usv_place import load_real_usv_rows, search_l2, search_l2_tta  # noqa: E402
+from eval_real_asv_place import load_real_asv_rows, search_l2, search_l2_tta  # noqa: E402
 
 
 def save_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -205,15 +205,15 @@ def evaluate_pairs_for_sequence(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Evaluate real-world USV global localization from Top-1 retrieval pairs.")
-    parser.add_argument("--dataset-root", type=Path, default=Path("data/Real-World USV Applications"))
-    parser.add_argument("--place-dir", type=Path, default=Path("outputs/eval_real_usv_place"))
-    parser.add_argument("--output-dir", type=Path, default=Path("outputs/eval_real_usv_global_localization"))
-    parser.add_argument("--usvloc-config", type=Path, default=REPO_ROOT / "configs/usvloc_default.yaml")
-    parser.add_argument("--usvloc-ckpt", type=Path, default=REPO_ROOT / "checkpoint/results/final_best_place/usvloc_best_place_recognition.pt")
+    parser = argparse.ArgumentParser(description="Evaluate real-world ASV global localization from Top-1 retrieval pairs.")
+    parser.add_argument("--dataset-root", type=Path, default=Path("data/Real-World ASV Applications"))
+    parser.add_argument("--place-dir", type=Path, default=Path("outputs/eval_real_asv_place"))
+    parser.add_argument("--output-dir", type=Path, default=Path("outputs/eval_real_asv_global_localization"))
+    parser.add_argument("--asvloc-config", type=Path, default=REPO_ROOT / "configs/asvloc_default.yaml")
+    parser.add_argument("--asvloc-ckpt", type=Path, default=REPO_ROOT / "checkpoint/results/final_best_place/asvloc_best_place_recognition.pt")
     parser.add_argument("--local-geometry-ckpt", type=Path, default=None)
     parser.add_argument("--bevplace-ckpt", type=Path, default=None)
-    parser.add_argument("--methods", nargs="+", default=["USVLoc"], choices=["USVLoc", "BEVPlace++"])
+    parser.add_argument("--methods", nargs="+", default=["ASVLoc"], choices=["ASVLoc", "BEVPlace++"])
     parser.add_argument("--positive-radius-m", type=float, default=5.0)
     parser.add_argument("--success-translation-m", type=float, default=2.0)
     parser.add_argument("--success-rotation-deg", type=float, default=5.0)
@@ -240,22 +240,22 @@ def main() -> None:
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    rows = load_real_usv_rows(dataset_root)
+    rows = load_real_asv_rows(dataset_root)
     device = torch.device(args.device)
     if device.type == "cuda":
         torch.cuda.set_device(device.index or 0)
 
     descs: dict[str, np.ndarray] = {}
-    if "USVLoc" in args.methods:
-        descs["USVLoc"] = np.load(place_dir / "usvloc_descriptors.npy")
-        descs["USVLoc_TTA"] = np.load(place_dir / "usvloc_tta_descriptors.npy")
+    if "ASVLoc" in args.methods:
+        descs["ASVLoc"] = np.load(place_dir / "asvloc_descriptors.npy")
+        descs["ASVLoc_TTA"] = np.load(place_dir / "asvloc_tta_descriptors.npy")
     if "BEVPlace++" in args.methods:
         descs["BEVPlace++"] = np.load(place_dir / "bevplacepp_descriptors.npy")
     print(f"[data] rows={len(rows)} device={device}", flush=True)
 
     top1: dict[str, dict[str, list[dict[str, Any]]]] = {}
-    if "USVLoc" in args.methods:
-        top1["USVLoc"] = build_top1_details(rows, descs["USVLoc"], descs["USVLoc_TTA"], args.positive_radius_m)
+    if "ASVLoc" in args.methods:
+        top1["ASVLoc"] = build_top1_details(rows, descs["ASVLoc"], descs["ASVLoc_TTA"], args.positive_radius_m)
     if "BEVPlace++" in args.methods:
         top1["BEVPlace++"] = build_top1_details(rows, descs["BEVPlace++"], None, args.positive_radius_m)
 
@@ -274,8 +274,8 @@ def main() -> None:
     )
 
     adapters: dict[str, Any] = {}
-    if "USVLoc" in args.methods:
-        adapters["USVLoc"], _ = load_hybrid_adapter(args.usvloc_config, args.usvloc_ckpt, geometry_ckpt, device=device)
+    if "ASVLoc" in args.methods:
+        adapters["ASVLoc"], _ = load_hybrid_adapter(args.asvloc_config, args.asvloc_ckpt, geometry_ckpt, device=device)
     if "BEVPlace++" in args.methods:
         adapters["BEVPlace++"], _ = load_bevplacepp_adapter(geometry_ckpt, device=device)
 
@@ -304,7 +304,7 @@ def main() -> None:
                 success_translation_m=float(args.success_translation_m),
                 success_rotation_deg=float(args.success_rotation_deg),
                 force_gray3=bool(args.force_gray3),
-                seed_base=1024 if method == "USVLoc" else 4096,
+                seed_base=1024 if method == "ASVLoc" else 4096,
             )
             summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
             save_tsv(pairs_path, pair_rows)
@@ -354,7 +354,7 @@ def main() -> None:
                 "positive_radius_m": float(args.positive_radius_m),
                 "success_translation_m": float(args.success_translation_m),
                 "success_rotation_deg": float(args.success_rotation_deg),
-                "usvloc_backend": "USVLoc descriptor retrieval with 4-rotation query TTA; BEVPlace++ REM local features and RANSAC for pose",
+                "asvloc_backend": "ASVLoc descriptor retrieval with 4-rotation query TTA; BEVPlace++ REM local features and RANSAC for pose",
                 "bevplacepp_backend": "BEVPlace++ descriptor retrieval; BEVPlace++ REM local features and RANSAC for pose",
                 "errors": "e_t/e_r are averaged over successful localizations.",
             },

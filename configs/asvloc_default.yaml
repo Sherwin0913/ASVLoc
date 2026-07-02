@@ -1,5 +1,5 @@
 project:
-  name: usvloc_default_50ep
+  name: asvloc_default_50ep
 
 paths:
   outputs_root: outputs

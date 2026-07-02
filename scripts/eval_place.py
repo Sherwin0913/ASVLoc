@@ -11,14 +11,14 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from usvloc.config import load_config
-from usvloc.evaluation import evaluate_place_all
-from usvloc.models import USVLoc
+from asvloc.config import load_config
+from asvloc.evaluation import evaluate_place_all
+from asvloc.models import ASVLoc
 
 
 def main() -> None:
     """KITTI/NCLT/Pohang place recognition evaluation entry point."""
-    parser = argparse.ArgumentParser(description="Evaluate USVLoc place recognition on KITTI, NCLT, or Pohang.")
+    parser = argparse.ArgumentParser(description="Evaluate ASVLoc place recognition on KITTI, NCLT, or Pohang.")
     parser.add_argument("--config", required=True)
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--output-dir", required=True)
@@ -30,7 +30,7 @@ def main() -> None:
     if bool(args.query_tta):
         cfg.setdefault("evaluation", {})["query_tta"] = True
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = USVLoc(cfg["model"]).to(device)
+    model = ASVLoc(cfg["model"]).to(device)
     checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=False)
     state_dict = checkpoint["state_dict"] if isinstance(checkpoint, dict) and "state_dict" in checkpoint else checkpoint
     model.load_state_dict(state_dict, strict=True)

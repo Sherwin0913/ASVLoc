@@ -176,7 +176,7 @@ def full_rigid_ransac(
 
 
 class PolarRansacBackend:
-    """USVLoc-specific backend: FAISS top-10, polar ACC rerank, top-5 local verification."""
+    """ASVLoc-specific backend: FAISS top-10, polar ACC rerank, top-5 local verification."""
 
     def __init__(
         self,
@@ -188,7 +188,7 @@ class PolarRansacBackend:
         self.loc_inlier_threshold = int(loc_inlier_threshold)
         self.random_seed = int(random_seed)
         self._rng = np.random.default_rng(self.random_seed)
-        self.debug_limit = int(os.environ.get("USVLOC_POLAR_DEBUG_LIMIT", "0") or 0)
+        self.debug_limit = int(os.environ.get("ASVLOC_POLAR_DEBUG_LIMIT", "0") or 0)
         self._debug_count = 0
 
     def rerank(

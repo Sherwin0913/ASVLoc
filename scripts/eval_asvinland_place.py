@@ -11,22 +11,22 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from usvloc.config import load_config
-from usvloc.evaluation import evaluate_usvinland_place
-from usvloc.models import USVLoc
+from asvloc.config import load_config
+from asvloc.evaluation import evaluate_asvinland_place
+from asvloc.models import ASVLoc
 
 
 def main() -> None:
-    """USVInland place recognition evaluation entry point.
+    """ASVInland place recognition evaluation entry point.
 
-    The USVInland protocol reads BEV/INS/Lidar folders directly from
+    The ASVInland protocol reads BEV/INS/Lidar folders directly from
     ``raw_root`` instead of using ``processed_root``.
     """
-    parser = argparse.ArgumentParser(description="Evaluate USVLoc on USVInland place recognition using the BEVPlace++ protocol.")
+    parser = argparse.ArgumentParser(description="Evaluate ASVLoc on ASVInland place recognition using the BEVPlace++ protocol.")
     parser.add_argument("--config", required=True)
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--output-dir", required=True)
-    parser.add_argument("--raw-root", default=str(REPO_ROOT / "data/USVInlandRaw"))
+    parser.add_argument("--raw-root", default=str(REPO_ROOT / "data/ASVInlandRaw"))
     parser.add_argument("--sequences", nargs="+", default=None)
     parser.add_argument("--positive-radius-m", type=float, default=5.0)
     parser.add_argument("--split-ratio", type=float, default=0.5)
@@ -41,13 +41,13 @@ def main() -> None:
     cfg = load_config(args.config, overrides=args.overrides)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = USVLoc(cfg["model"]).to(device)
+    model = ASVLoc(cfg["model"]).to(device)
     checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=False)
     state_dict = checkpoint["state_dict"] if isinstance(checkpoint, dict) and "state_dict" in checkpoint else checkpoint
     model.load_state_dict(state_dict, strict=True)
     model.eval()
 
-    summary = evaluate_usvinland_place(
+    summary = evaluate_asvinland_place(
         model=model,
         cfg=cfg,
         device=device,

@@ -10,10 +10,10 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from usvloc.data.common import ProcessedSequenceDataset
-from usvloc.data.splits import build_kitti_place_spec, build_nclt_place_specs, build_pohang_place_specs, build_usvinland_place_specs
-from usvloc.evaluation.retrieval import search_topk
-from usvloc.io import ensure_dir, save_json, save_tsv
+from asvloc.data.common import ProcessedSequenceDataset
+from asvloc.data.splits import build_kitti_place_spec, build_nclt_place_specs, build_pohang_place_specs, build_asvinland_place_specs
+from asvloc.evaluation.retrieval import search_topk
+from asvloc.io import ensure_dir, save_json, save_tsv
 
 from .frontends import descriptors_to_numpy
 from .metrics import (
@@ -382,10 +382,10 @@ def _build_specs(dataset_name: str, processed_root: str | Path, positive_radius_
                 positive_radius_m=float(positive_radius_m),
             )
         ]
-    if dataset_name == "usvinland":
+    if dataset_name == "asvinland":
         return [
             RetrievalSpec(
-                dataset_name="usvinland",
+                dataset_name="asvinland",
                 sequence_name=spec.query_sequence_name,
                 database_sequence_name=spec.database_sequence_name,
                 query_sequence_dir=spec.query_sequence_dir,
@@ -394,7 +394,7 @@ def _build_specs(dataset_name: str, processed_root: str | Path, positive_radius_
                 database_indices=spec.database_indices,
                 positive_radius_m=spec.positive_radius_m,
             )
-            for spec in build_usvinland_place_specs(processed_root, positive_radius_m=float(positive_radius_m))
+            for spec in build_asvinland_place_specs(processed_root, positive_radius_m=float(positive_radius_m))
         ]
     raise ValueError(f"Unsupported backend dataset: {dataset_name}")
 
@@ -1231,7 +1231,7 @@ def benchmark_hybrid_rerank_runtime(
     """Benchmark the actual hybrid Top-K/Top-V pipeline.
 
     Unlike ``benchmark_runtime`` this measures the deployed hybrid protocol:
-    USVLoc query descriptor with 4-rotation TTA, Top-K retrieval, Top-V
+    ASVLoc query descriptor with 4-rotation TTA, Top-K retrieval, Top-V
     BEVPlace++ local feature extraction, and geometric reranking.
     """
     output_dir = ensure_dir(output_dir)
@@ -1396,7 +1396,7 @@ def benchmark_hybrid_rerank_runtime(
         "dataset": str(dataset_name),
         "runtime_sequence": spec.sequence_name,
         "database": spec.database_sequence_name,
-        "protocol": "hybrid_usvloc_tta_topk_bevplacepp_topv_rerank",
+        "protocol": "hybrid_asvloc_tta_topk_bevplacepp_topv_rerank",
         "rerank_top_k": int(retrieve_k),
         "rerank_top_v": int(verify_v),
         "rerank_strong_min_inliers": int(rerank_strong_min_inliers),
@@ -1545,7 +1545,7 @@ def evaluate_backend_bundle(
                 rerank_strong_min_inliers=rerank_strong_min_inliers,
             )
         if include_runtime:
-            if str(getattr(adapter, "name", "")).lower() == "usvloc_bevplacepp_hybrid" and int(global_top_v) > 1:
+            if str(getattr(adapter, "name", "")).lower() == "asvloc_bevplacepp_hybrid" and int(global_top_v) > 1:
                 dataset_payload["runtime"] = benchmark_hybrid_rerank_runtime(
                     adapter,
                     backend,

@@ -47,7 +47,7 @@ class RadialMixerLayer(nn.Module):
 
 
 class RadialMixVPRHead(nn.Module):
-    """USVLoc global descriptor head.
+    """ASVLoc global descriptor head.
 
     Input [B,C,R] radial features pass through multiple radial/channel mixing
     layers, are projected to ``out_channels x out_rows``, then flattened and

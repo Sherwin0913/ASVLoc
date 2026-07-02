@@ -11,9 +11,9 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Subset
 
-from usvloc.data.common import ProcessedSequenceDataset
-from usvloc.evaluation.retrieval import search_topk
-from usvloc.io import ensure_dir, save_json, save_tsv
+from asvloc.data.common import ProcessedSequenceDataset
+from asvloc.evaluation.retrieval import search_topk
+from asvloc.io import ensure_dir, save_json, save_tsv
 
 from .evaluator import (
     RetrievalSpec,
@@ -343,7 +343,7 @@ def evaluate_polar_loop(
             metric=retrieval_metric,
             use_gpu=bool(faiss_gpu),
         )
-        debug_limit = int(os.environ.get("USVLOC_POLAR_DEBUG_LIMIT", "0") or 0)
+        debug_limit = int(os.environ.get("ASVLOC_POLAR_DEBUG_LIMIT", "0") or 0)
         db_profiles_f32 = db["polar_profiles"].astype(np.float32, copy=False)
         min_gt_distances = _min_distances_to_database(query["position"], db["position"])
         has_positive = min_gt_distances < float(positive_radius_m)
@@ -482,7 +482,7 @@ def evaluate_polar_loop(
         "Mean MaxRecall@100P": mean_or_zero([float(row["MaxRecall@100P"]) for row in per_sequence]),
         "Mean e_t_m": mean_or_zero([float(row["e_t_m"]) for row in per_sequence]),
         "Mean e_r_deg": mean_or_zero([float(row["e_r_deg"]) for row in per_sequence]),
-            "notes": "BEVPlace2-main aligned protocol: KITTI positives use raw 3D pose distance [x,y,z]; KITTI pose error uses BEV ground-plane [x,z]+yaw. Loop PR/AP/MaxF1/MaxRecall@100P threshold the descriptor Top-1 distance; e_t/e_r are averaged over true-positive Top-1 queries with valid pose estimates. USVLoc descriptors use 4-rotation TTA before selecting Top-1.",
+            "notes": "BEVPlace2-main aligned protocol: KITTI positives use raw 3D pose distance [x,y,z]; KITTI pose error uses BEV ground-plane [x,z]+yaw. Loop PR/AP/MaxF1/MaxRecall@100P threshold the descriptor Top-1 distance; e_t/e_r are averaged over true-positive Top-1 queries with valid pose estimates. ASVLoc descriptors use 4-rotation TTA before selecting Top-1.",
     }
     save_json(output_dir / "paper_loop_v4.json", payload)
     save_tsv(output_dir / "paper_loop_v4.tsv", _with_mean_row(per_sequence, ["AP", "MaxF1", "MaxRecall@100P", "e_t_m", "e_r_deg"]))
@@ -534,7 +534,7 @@ def evaluate_polar_global_loc(
             metric=retrieval_metric,
             use_gpu=bool(faiss_gpu),
         )
-        debug_limit = int(os.environ.get("USVLOC_POLAR_DEBUG_LIMIT", "0") or 0)
+        debug_limit = int(os.environ.get("ASVLOC_POLAR_DEBUG_LIMIT", "0") or 0)
         db_profiles_f32 = db["polar_profiles"].astype(np.float32, copy=False)
         query_lookup = {int(idx): pos for pos, idx in enumerate(query["indices"])}
         db_lookup = {int(idx): pos for pos, idx in enumerate(db["indices"])}
@@ -643,7 +643,7 @@ def evaluate_polar_global_loc(
         "MeanRotErr": mean_or_zero([float(row["MeanRotErr"]) for row in per_sequence]),
         "success_translation_m": float(success_translation_m),
         "success_rotation_deg": float(success_rotation_deg),
-            "notes": "BEVPlace2-main aligned protocol: KITTI positives use raw 3D pose distance [x,y,z]; KITTI pose error uses BEV ground-plane [x,z]+yaw. Descriptor Top-1 is used for Recall@1 and pose estimation; SR uses the (2 m, 5 deg) threshold; e_t/e_r are averaged over successful localizations. USVLoc descriptors use 4-rotation TTA before selecting Top-1.",
+            "notes": "BEVPlace2-main aligned protocol: KITTI positives use raw 3D pose distance [x,y,z]; KITTI pose error uses BEV ground-plane [x,z]+yaw. Descriptor Top-1 is used for Recall@1 and pose estimation; SR uses the (2 m, 5 deg) threshold; e_t/e_r are averaged over successful localizations. ASVLoc descriptors use 4-rotation TTA before selecting Top-1.",
     }
     save_json(output_dir / "paper_global_loc_v4.json", payload)
     save_tsv(output_dir / "paper_global_loc_v4.tsv", _with_mean_row(per_sequence, ["Recall@1", "SuccessRate", "MeanTransErr", "MeanRotErr"]))
@@ -779,7 +779,7 @@ def benchmark_polar_runtime(
         "EndToEndTime": summarize_runtime(e2e_times),
         "timed_queries": int(len(query_indices)),
         "warmup": int(warmup),
-        "notes": "USVLoc polar runtime includes 4-rotation query descriptor TTA, light ACC reranking, top-5 candidate feature extraction, and BEVPlace2-style 2-point full rigid RANSAC verification.",
+        "notes": "ASVLoc polar runtime includes 4-rotation query descriptor TTA, light ACC reranking, top-5 candidate feature extraction, and BEVPlace2-style 2-point full rigid RANSAC verification.",
     }
     save_json(output_dir / "paper_runtime.json", payload)
     save_tsv(

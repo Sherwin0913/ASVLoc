@@ -16,7 +16,7 @@ from ..io import ensure_dir, save_json, save_tsv
 from .retrieval import compute_recall_at_k, compute_recall_at_one_percent, search_topk
 
 
-USVINLAND_DEFAULT_SEQUENCES: tuple[str, ...] = (
+ASVINLAND_DEFAULT_SEQUENCES: tuple[str, ...] = (
     "H05_7_Sequence_160_270",
     "H05_9_Sequence_115_700",
     "N02_4_Sequence_155_370",
@@ -29,7 +29,7 @@ USVINLAND_DEFAULT_SEQUENCES: tuple[str, ...] = (
 
 
 @dataclass
-class USVInlandSequence:
+class ASVInlandSequence:
     sequence_name: str
     frame_ids: np.ndarray
     frame_paths: list[Path]
@@ -40,12 +40,12 @@ class USVInlandSequence:
     nav_match_dt_s: np.ndarray
 
 
-class USVInlandDataset(Dataset):
-    """Reader for raw USVInland BEV images."""
+class ASVInlandDataset(Dataset):
+    """Reader for raw ASVInland BEV images."""
 
     def __init__(
         self,
-        sequence: USVInlandSequence,
+        sequence: ASVInlandSequence,
         image_size: int,
         input_channels: int,
         normalization_divisor: float,
@@ -76,7 +76,7 @@ class USVInlandDataset(Dataset):
         }
 
 
-def discover_usvinland_sequences(raw_root: str | Path) -> tuple[str, ...]:
+def discover_asvinland_sequences(raw_root: str | Path) -> tuple[str, ...]:
     raw_root = Path(raw_root)
     sequence_names: list[str] = []
     for bev_dir in sorted(raw_root.glob("*-BEV")):
@@ -86,22 +86,22 @@ def discover_usvinland_sequences(raw_root: str | Path) -> tuple[str, ...]:
         if (raw_root / f"{sequence_name}-INS").is_dir() and (raw_root / f"{sequence_name}-Lidar").is_dir():
             sequence_names.append(sequence_name)
     if not sequence_names:
-        raise RuntimeError(f"No valid USVInland sequences discovered under {raw_root}")
+        raise RuntimeError(f"No valid ASVInland sequences discovered under {raw_root}")
     return tuple(sequence_names)
 
 
-def load_usvinland_sequence(raw_root: str | Path, sequence_name: str) -> USVInlandSequence:
-    """Load one USVInland sequence and align LiDAR frames with INS/GPS poses by timestamp."""
+def load_asvinland_sequence(raw_root: str | Path, sequence_name: str) -> ASVInlandSequence:
+    """Load one ASVInland sequence and align LiDAR frames with INS/GPS poses by timestamp."""
     raw_root = Path(raw_root)
     bev_dir = raw_root / f"{sequence_name}-BEV"
     ins_dir = raw_root / f"{sequence_name}-INS"
     lidar_dir = raw_root / f"{sequence_name}-Lidar"
     if not bev_dir.is_dir():
-        raise FileNotFoundError(f"USVInland BEV dir not found: {bev_dir}")
+        raise FileNotFoundError(f"ASVInland BEV dir not found: {bev_dir}")
     if not ins_dir.is_dir():
-        raise FileNotFoundError(f"USVInland INS dir not found: {ins_dir}")
+        raise FileNotFoundError(f"ASVInland INS dir not found: {ins_dir}")
     if not lidar_dir.is_dir():
-        raise FileNotFoundError(f"USVInland lidar dir not found: {lidar_dir}")
+        raise FileNotFoundError(f"ASVInland lidar dir not found: {lidar_dir}")
 
     frame_paths = sorted(bev_dir.glob("*.png"), key=lambda path: int(path.stem))
     if not frame_paths:
@@ -131,7 +131,7 @@ def load_usvinland_sequence(raw_root: str | Path, sequence_name: str) -> USVInla
     matched_idx = np.where(choose_right, idx_right, idx_left)
 
     yaw_rad = np.deg2rad(gps_heading_deg[matched_idx].astype(np.float64))
-    return USVInlandSequence(
+    return ASVInlandSequence(
         sequence_name=sequence_name,
         frame_ids=frame_ids,
         frame_paths=frame_paths,
@@ -143,9 +143,9 @@ def load_usvinland_sequence(raw_root: str | Path, sequence_name: str) -> USVInla
     )
 
 
-def extract_usvinland_descriptors(
+def extract_asvinland_descriptors(
     model,
-    sequence: USVInlandSequence,
+    sequence: ASVInlandSequence,
     image_size: int,
     input_channels: int,
     normalization_divisor: float,
@@ -154,7 +154,7 @@ def extract_usvinland_descriptors(
     device: torch.device,
     include_tta: bool = False,
 ) -> np.ndarray:
-    dataset = USVInlandDataset(
+    dataset = ASVInlandDataset(
         sequence=sequence,
         image_size=image_size,
         input_channels=input_channels,
@@ -187,7 +187,7 @@ def extract_usvinland_descriptors(
                 descriptors.append(desc)
             if batch_idx == 1 or batch_idx % 10 == 0 or batch_idx == total_batches:
                 print(
-                    f"[USVInland][Eval] {sequence.sequence_name} feature bank {batch_idx}/{total_batches}",
+                    f"[ASVInland][Eval] {sequence.sequence_name} feature bank {batch_idx}/{total_batches}",
                     flush=True,
                 )
     return np.concatenate(descriptors, axis=0).astype(np.float32, copy=False)
@@ -232,7 +232,7 @@ def search_topk_with_query_tta(
     return out_scores, out_indices
 
 
-def split_usvinland_indices(num_frames: int, split_ratio: float) -> tuple[np.ndarray, np.ndarray]:
+def split_asvinland_indices(num_frames: int, split_ratio: float) -> tuple[np.ndarray, np.ndarray]:
     """Split database/query indices in temporal order.
 
     The default 0.5 ratio uses the first half as the database and the second
@@ -278,12 +278,12 @@ def _write_place_outputs(output_dir: Path, per_sequence: list[dict[str, object]]
     return payload
 
 
-def evaluate_usvinland_place(
+def evaluate_asvinland_place(
     model,
     cfg: dict,
     device: torch.device,
     output_dir: str | Path | None = None,
-    raw_root: str | Path = "data/USVInlandRaw",
+    raw_root: str | Path = "data/ASVInlandRaw",
     sequences: Sequence[str] | None = None,
     positive_radius_m: float = 5.0,
     split_ratio: float = 0.5,
@@ -293,18 +293,18 @@ def evaluate_usvinland_place(
     faiss_gpu: bool = False,
     query_tta: bool = False,
 ) -> dict[str, object]:
-    """Evaluate USVInland place recognition.
+    """Evaluate ASVInland place recognition.
 
-    USVInland does not use ``processed_root``. It reads ``*-BEV``, ``*-INS``,
+    ASVInland does not use ``processed_root``. It reads ``*-BEV``, ``*-INS``,
     and ``*-Lidar`` folders directly under ``raw_root``.
     """
     raw_root = Path(raw_root).resolve()
     if sequences is None:
-        sequences = discover_usvinland_sequences(raw_root)
+        sequences = discover_asvinland_sequences(raw_root)
     else:
         sequences = [str(sequence) for sequence in sequences]
         if len(sequences) == 0:
-            sequences = list(discover_usvinland_sequences(raw_root))
+            sequences = list(discover_asvinland_sequences(raw_root))
     image_size = int(cfg["model"].get("input_size", 201))
     input_channels = int(cfg["model"].get("input_channels", 3))
     batch_size = int(eval_batch_size or cfg.get("evaluation", {}).get("eval_batch_size", 64))
@@ -312,8 +312,8 @@ def evaluate_usvinland_place(
     per_sequence_rows: list[dict[str, object]] = []
     sequence_summaries: list[dict[str, object]] = []
     for sequence_name in sequences:
-        sequence = load_usvinland_sequence(raw_root, sequence_name)
-        descriptors = extract_usvinland_descriptors(
+        sequence = load_asvinland_sequence(raw_root, sequence_name)
+        descriptors = extract_asvinland_descriptors(
             model=model,
             sequence=sequence,
             image_size=image_size,
@@ -324,7 +324,7 @@ def evaluate_usvinland_place(
             device=device,
             include_tta=bool(query_tta),
         )
-        db_indices, query_indices = split_usvinland_indices(len(sequence.frame_paths), float(split_ratio))
+        db_indices, query_indices = split_asvinland_indices(len(sequence.frame_paths), float(split_ratio))
         db_descs = descriptors[db_indices, 0, :] if bool(query_tta) else descriptors[db_indices]
         query_descs = descriptors[query_indices] if bool(query_tta) else descriptors[query_indices]
         db_xy = np.stack([sequence.x_m[db_indices], sequence.y_m[db_indices]], axis=1).astype(np.float32, copy=False)
@@ -382,7 +382,7 @@ def evaluate_usvinland_place(
         "per_sequence": per_sequence_rows,
     }
     summary = {
-        "protocol": "usvinland_intra_sequence_temporal_split",
+        "protocol": "asvinland_intra_sequence_temporal_split",
         "raw_root": str(raw_root),
         "split_ratio": float(split_ratio),
         "positive_radius_m": float(positive_radius_m),

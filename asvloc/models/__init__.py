@@ -1,6 +1,6 @@
 from .attention import PolarSelfAttention
 from .backbone import TruncatedResNetEncoder
-from .model import USVLoc
+from .model import ASVLoc
 from .polar import CartesianToPolar, CircularConvBlock, PolarMixStyle
 from .pooling import AngularGeMPool
 from .radial_mix import RadialMixVPRHead
@@ -13,5 +13,5 @@ __all__ = [
     "PolarSelfAttention",
     "RadialMixVPRHead",
     "TruncatedResNetEncoder",
-    "USVLoc",
+    "ASVLoc",
 ]
