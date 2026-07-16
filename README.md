@@ -1,4 +1,4 @@
-# Compute-Efficient Polar BEV Descriptors for Cross-Domain LiDAR Place Recognition on Road and Waterway Platforms
+# Coordinate-Split Polar BEV Descriptors for Cross-Domain LiDAR Place Recognition 
 
 <p align="center">
   <img src="figures/asvloc_architecture.png" width="95%" alt="ASVLoc architecture">
@@ -120,16 +120,16 @@ If your data is stored elsewhere, override the path at runtime:
 DATA_ROOT=/path/to/processed/data bash scripts/eval_kitti_nclt_pohang.sh
 ```
 
-For ASVInland place recognition, the raw dataset is read directly from:
+For USVInland place recognition, the raw dataset is read directly from:
 
 ```text
-data/ASVInlandRaw
+data/USVInlandRaw
 ```
 
 Override it with:
 
 ```bash
-RAW_ROOT=/path/to/asvinland bash scripts/eval_asvinland.sh
+RAW_ROOT=/path/to/usvinland bash scripts/eval_usvinland.sh
 ```
 
 ## Checkpoint
@@ -228,14 +228,14 @@ python scripts/eval_place.py \
   --set dataset.processed_root=/path/to/processed/data
 ```
 
-### ASVInland
+### USVInland
 
 ```bash
 GPU_ID=0 \
-RAW_ROOT=/path/to/asvinland \
+RAW_ROOT=/path/to/usvinland \
 CHECKPOINT=checkpoint/results/final_best_place/asvloc_best_place_recognition.pt \
-OUTPUT_DIR=outputs/eval_asvinland \
-bash scripts/eval_asvinland.sh
+OUTPUT_DIR=outputs/eval_usvinland \
+bash scripts/eval_usvinland.sh
 ```
 
 ## Loop Closure and Global Localization
